@@ -1,0 +1,14 @@
+--- libs/libxml2-2.9.1/python/Makefile.in
++++ libs/libxml2-2.9.1/python/Makefile.in
+@@ -853,8 +853,9 @@
+ 
+ info-am:
+ 
+-install-data-am: install-dist_docsDATA install-dist_pythonDATA \
+-	install-pythonLTLIBRARIES
++#install-data-am: install-dist_docsDATA install-dist_pythonDATA \
++#	install-pythonLTLIBRARIES
++install-data-am: install-dist_docsDATA
+ 
+ install-dvi: install-dvi-recursive
+ 

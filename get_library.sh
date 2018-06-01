@@ -26,7 +26,7 @@ elif [ $1 == 'bfl' ]; then
     URL=https://github.com/ros-gbp/bfl-release/archive/release/indigo/bfl/0.7.0-6.tar.gz
     COMP='gz'
 elif [ $1 == 'boost' ]; then
-    URL=https://github.com/ekumenlabs/Boost-for-Android.git
+    URL=https://github.com/moritz-wundke/Boost-for-Android
     COMP='git'
 elif [ $1 == 'bzip2' ]; then
     URL=https://github.com/osrf/bzip2_cmake.git
@@ -103,6 +103,7 @@ elif [ $1 == 'urdfdom' ]; then
 elif [ $1 == 'uuid' ]; then
     URL=https://github.com/chadrockey/uuid_cmake
     COMP='git'
+    HASH='96634db9f9ae90e2f541f9e375c645e5182ebb13'
 elif [ $1 == 'yaml-cpp' ]; then
     URL=https://github.com/ekumenlabs/yaml-cpp.git
     COMP='git'
@@ -121,8 +122,9 @@ elif [ $COMP == 'git' ];then
 fi
 
 if [ $1 == 'boost' ]; then
+    patch -p0 $prefix/boost/build-android.sh ${my_loc}/patches/additional/boost_build-android.sh.patch
     cd $prefix/boost
-    ./build-android.sh $ANDROID_NDK --boost=1.53.0
+    ./build-android.sh $ANDROID_NDK --boost=1.67.0
 elif [ -v HASH ]; then
     cd $prefix/$1
     git checkout $HASH

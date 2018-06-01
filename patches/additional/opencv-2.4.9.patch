@@ -1,0 +1,42 @@
+--- libs/opencv-2.4.9/CMakeLists.txt
++++ libs/opencv-2.4.9/CMakeLists.txt
+@@ -46,6 +46,7 @@
+ if(POLICY CMP0022)
+   cmake_policy(SET CMP0022 OLD)
+ endif()
++add_compile_options(-Wno-narrowing -Wno-tautological-pointer-compare -Wno-pointer-bool-conversion)
+ 
+ # must go before the project command
+ set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configs" FORCE)
+@@ -178,7 +179,9 @@
+ OCV_OPTION(BUILD_TESTS              "Build accuracy & regression tests"           OFF  IF (NOT IOS) )
+ OCV_OPTION(BUILD_WITH_DEBUG_INFO    "Include debug info into debug libs (not MSCV only)" ON )
+ OCV_OPTION(BUILD_WITH_STATIC_CRT    "Enables use of staticaly linked CRT for staticaly linked OpenCV" ON IF MSVC )
+-OCV_OPTION(BUILD_FAT_JAVA_LIB       "Create fat java wrapper containing the whole OpenCV library" ON IF NOT BUILD_SHARED_LIBS AND CMAKE_COMPILER_IS_GNUCXX )
++#OCV_OPTION(BUILD_FAT_JAVA_LIB       "Create fat java wrapper containing the whole OpenCV library" ON IF NOT BUILD_SHARED_LIBS AND CMAKE_COMPILER_IS_GNUCXX )
++OCV_OPTION(BUILD_FAT_JAVA_LIB       "Create fat java wrapper containing the whole OpenCV library" OFF )
++SET(BUILD_opencv_java OFF)
+ OCV_OPTION(BUILD_ANDROID_SERVICE    "Build OpenCV Manager for Google Play" OFF IF ANDROID AND ANDROID_SOURCE_TREE )
+ OCV_OPTION(BUILD_ANDROID_PACKAGE    "Build platform-specific package for Google Play" OFF IF ANDROID )
+ 
+--- libs/opencv-2.4.9/modules/androidcamera/src/camera_activity.cpp
++++ libs/opencv-2.4.9/modules/androidcamera/src/camera_activity.cpp
+@@ -7,6 +7,7 @@
+ #include <string>
+ #include <vector>
+ #include <algorithm>
++#include <functional>
+ #include <opencv2/core/version.hpp>
+ #include "camera_activity.hpp"
+ #include "camera_wrapper.h"
+--- libs/opencv-2.4.9/modules/core/include/opencv2/core/operations.hpp
++++ libs/opencv-2.4.9/modules/core/include/opencv2/core/operations.hpp
+@@ -56,7 +56,7 @@
+   #define CV_XADD(addr,delta) _InterlockedExchangeAdd(const_cast<void*>(reinterpret_cast<volatile void*>(addr)), delta)
+ #elif defined __GNUC__
+ 
+-  #if defined __clang__ && __clang_major__ >= 3 && !defined __ANDROID__ && !defined __EMSCRIPTEN__
++  #if defined __clang__ && __clang_major__ >= 3 && !defined __EMSCRIPTEN__
+     #ifdef __ATOMIC_SEQ_CST
+         #define CV_XADD(addr, delta) __c11_atomic_fetch_add((_Atomic(int)*)(addr), (delta), __ATOMIC_SEQ_CST)
+     #else

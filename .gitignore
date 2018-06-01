@@ -1,2 +1,4 @@
 output
 *.pyc
+files/pluginlib_helper/pluginlib_helper.cpp
+files/rospkg/

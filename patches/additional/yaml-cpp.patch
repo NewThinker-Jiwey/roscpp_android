@@ -1,0 +1,4 @@
+--- libs/yaml-cpp/include/yaml-cpp/node/detail/iterator.h
++++ libs/yaml-cpp/include/yaml-cpp/node/detail/iterator.h
+@@ -13,0 +13,1 @@
++#include <boost/next_prior.hpp>

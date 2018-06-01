@@ -1,0 +1,4 @@
+--- libs/uuid/CMakeLists.txt
++++ libs/uuid/CMakeLists.txt
+@@ -16,0 +16,1 @@
++target_compile_definitions(uuid PRIVATE HAVE_UNISTD_H HAVE_GETRLIMIT)

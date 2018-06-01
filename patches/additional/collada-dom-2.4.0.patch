@@ -1,0 +1,15 @@
+--- libs/collada-dom-2.4.0/dom/external-libs/pcre-8.02/config-cmake.h.in
++++ libs/collada-dom-2.4.0/dom/external-libs/pcre-8.02/config-cmake.h.in
+@@ -16,1 +16,0 @@
+-#cmakedefine HAVE_STRTOQ 1
+--- libs/collada-dom-2.4.0/dom/src/dae/daeMetaGroup.cpp
++++ libs/collada-dom-2.4.0/dom/src/dae/daeMetaGroup.cpp
+@@ -26,7 +26,7 @@
+ 	(void)offset;
+ 	daeString nm = child->getElementName();
+ 	if ( findChild( nm ) == NULL ) {
+-		return false;
++		return NULL;
+ 	}
+ 	daeElementRef el;
+ 

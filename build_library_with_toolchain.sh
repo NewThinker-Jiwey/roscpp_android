@@ -25,8 +25,7 @@ echo
 [ "$CMAKE_PREFIX_PATH" = "" ] && die 'could not find target basedir. Have you run build_catkin.sh and sourced setup.bash?'
 
 if [ ! -d toolchain/ ]; then
-  mkdir toolchain/
-  $ANDROID_NDK/build/tools/make-standalone-toolchain.sh --platform=android-8 --install-dir=./toolchain --ndk-dir=$ANDROID_NDK --system=linux-x86_64
+  $ANDROID_NDK/build/tools/make-standalone-toolchain.sh --platform=android-22 --install-dir=./toolchain --arch=arm
 fi
 
 if [ $1 == 'poco' ]; then

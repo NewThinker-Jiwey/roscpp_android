@@ -1,0 +1,133 @@
+--- libs/pcl/CMakeLists.txt
++++ libs/pcl/CMakeLists.txt
+@@ -71,11 +71,6 @@ if(CMAKE_TIMING_VERBOSE AND UNIX)
+   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_SOURCE_DIR}/cmake/custom_output.sh")
+ endif(CMAKE_TIMING_VERBOSE AND UNIX)
+ 
+-# check for SSE flags
+-include("${PCL_SOURCE_DIR}/cmake/pcl_find_sse.cmake")
+-if (PCL_ENABLE_SSE)
+-  PCL_CHECK_FOR_SSE()
+-endif (PCL_ENABLE_SSE)
+ 
+ # ---[ Unix/Darwin/Windows specific flags
+ if(CMAKE_COMPILER_IS_GNUCXX)
+@@ -256,7 +251,7 @@ if(WITH_LIBUSB)
+ endif(WITH_LIBUSB)
+ 
+ # OpenNI
+-option(WITH_OPENNI "OpenNI driver support" TRUE)
++option(WITH_OPENNI "OpenNI driver support" FALSE)
+ if(WITH_OPENNI)
+   find_package(OpenNI)
+   if (OPENNI_FOUND)
+@@ -299,11 +294,12 @@ else()
+ endif()
+ 
+ # LibPNG
+-option(WITH_PNG "PNG file support" TRUE)
++option(WITH_PNG "PNG file support" FALSE)
+ if(WITH_PNG)
+   find_package(PNG)
+   if (PNG_FOUND)
+     set (HAVE_PNG ON)
++    list(REMOVE_ITEM PNG_INCLUDE_DIR "/usr/include")
+     include_directories("${PNG_INCLUDE_DIR}")
+   endif(PNG_FOUND)
+ endif(WITH_PNG)
+@@ -404,6 +400,10 @@ enable_testing()
+ include("${PCL_SOURCE_DIR}/cmake/pcl_targets.cmake")
+ 
+ collect_subproject_directory_names("${PCL_SOURCE_DIR}" "CMakeLists.txt" PCL_MODULES_NAMES PCL_MODULES_DIRS doc)
++list(REMOVE_ITEM PCL_MODULES_NAMES tools)
++list(REMOVE_ITEM PCL_MODULES_DIRS tools)
++message("PCL_MODULES_NAMES ${PCL_MODULES_NAMES}")
++message("PCL_MODULES_DIRS ${PCL_MODULES_DIRS}")
+ set(PCL_MODULES_NAMES_UNSORTED ${PCL_MODULES_NAMES})
+ topological_sort(PCL_MODULES_NAMES PCL_ _DEPENDS)
+ sort_relative(PCL_MODULES_NAMES_UNSORTED PCL_MODULES_NAMES PCL_MODULES_DIRS)
+--- libs/pcl/features/include/pcl/features/impl/pfh.hpp
++++ libs/pcl/features/include/pcl/features/impl/pfh.hpp
+@@ -94,7 +94,8 @@ pcl::PFHEstimation<PointInT, PointNT, PointOutT>::computePointPFHSignature (
+         key = std::pair<int, int> (p1, p2);
+ 
+         // Check to see if we already estimated this pair in the global hashmap
+-        std::map<std::pair<int, int>, Eigen::Vector4f, std::less<std::pair<int, int> >, Eigen::aligned_allocator<Eigen::Vector4f> >::iterator fm_it = feature_map_.find (key);
++        //std::map<std::pair<int, int>, Eigen::Vector4f, std::less<std::pair<int, int> >, Eigen::aligned_allocator<Eigen::Vector4f> >::iterator fm_it = feature_map_.find (key);
++        std::map<std::pair<int, int>, Eigen::Vector4f >::iterator fm_it = feature_map_.find (key);
+         if (fm_it != feature_map_.end ())
+           pfh_tuple_ = fm_it->second;
+         else
+--- libs/pcl/features/include/pcl/features/pfh.h
++++ libs/pcl/features/include/pcl/features/pfh.h
+@@ -208,7 +208,8 @@ namespace pcl
+       float d_pi_; 
+ 
+       /** \brief Internal hashmap, used to optimize efficiency of redundant computations. */
+-      std::map<std::pair<int, int>, Eigen::Vector4f, std::less<std::pair<int, int> >, Eigen::aligned_allocator<Eigen::Vector4f> > feature_map_;
++      //std::map<std::pair<int, int>, Eigen::Vector4f, std::less<std::pair<int, int> >, Eigen::aligned_allocator<Eigen::Vector4f> > feature_map_;
++      std::map<std::pair<int, int>, Eigen::Vector4f > feature_map_;
+ 
+       /** \brief Queue of pairs saved, used to constrain memory usage. */
+       std::queue<std::pair<int, int> > key_list_;
+--- libs/pcl/features/src/narf.cpp
++++ libs/pcl/features/src/narf.cpp
+@@ -380,7 +380,9 @@ Narf::extractForInterestPoints (const RangeImage& range_image, const PointCloud<
+   //!!! nizar 20110408 : for OpenMP sake on MSVC this must be kept signed
+   for (int interest_point_idx = 0; interest_point_idx < int (interest_points.points.size ()); ++interest_point_idx)
+   {
+-    Vector3fMapConst point = interest_points.points[interest_point_idx].getVector3fMap ();
++    //Vector3fMapConst point = interest_points.points[interest_point_idx].getVector3fMap ();
++    const auto& __tmp_point__ = interest_points.points[interest_point_idx];
++    Vector3fMapConst point = __tmp_point__.getVector3fMap ();
+     
+     Narf* feature = new Narf;
+     if (!feature->extractFromRangeImage(range_image, point, descriptor_size, support_size))
+--- libs/pcl/io/CMakeLists.txt
++++ libs/pcl/io/CMakeLists.txt
+@@ -260,6 +260,6 @@ if(build)
+     PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/openni_camera" ${OPENNI_INCLUDES})
+     PCL_ADD_INCLUDES("${SUBSYS_NAME}" "${SUBSYS_NAME}/impl" ${impl_incs})
+                 
+-    add_subdirectory(tools)
++    #add_subdirectory(tools)
+ 
+ endif(build)
+--- libs/pcl/io/src/lzf_image_io.cpp
++++ libs/pcl/io/src/lzf_image_io.cpp
+@@ -198,7 +198,7 @@ pcl::io::LZFImageWriter::writeParameter (const double &parameter,
+   catch (std::exception& e)
+   {}
+ 
+-  boost::property_tree::xml_writer_settings<char> settings ('\t', 1);
++  boost::property_tree::xml_writer_settings<std::string> settings ('\t', 1);
+   pt.put (tag, parameter);
+   write_xml (filename, pt, std::locale (), settings);
+ 
+@@ -218,7 +218,7 @@ pcl::io::LZFDepth16ImageWriter::writeParameters (const pcl::io::CameraParameters
+   catch (std::exception& e)
+   {}
+ 
+-  boost::property_tree::xml_writer_settings<char> settings ('\t', 1);
++  boost::property_tree::xml_writer_settings<std::string> settings ('\t', 1);
+   pt.put ("depth.focal_length_x", parameters.focal_length_x);
+   pt.put ("depth.focal_length_y", parameters.focal_length_y);
+   pt.put ("depth.principal_point_x", parameters.principal_point_x);
+@@ -279,7 +279,7 @@ pcl::io::LZFRGB24ImageWriter::writeParameters (const pcl::io::CameraParameters &
+   catch (std::exception& e)
+   {}
+ 
+-  boost::property_tree::xml_writer_settings<char> settings ('\t', 1);
++  boost::property_tree::xml_writer_settings<std::string> settings ('\t', 1);
+   pt.put ("rgb.focal_length_x", parameters.focal_length_x);
+   pt.put ("rgb.focal_length_y", parameters.focal_length_y);
+   pt.put ("rgb.principal_point_x", parameters.principal_point_x);
+--- libs/pcl/search/src/organized.cpp
++++ libs/pcl/search/src/organized.cpp
+@@ -42,5 +42,5 @@
+ #include <pcl/search/impl/organized.hpp>
+ 
+ // Instantiations of specific point types
+-PCL_INSTANTIATE(OrganizedNeighbor, PCL_XYZ_POINT_TYPES)
++//PCL_INSTANTIATE(OrganizedNeighbor, PCL_XYZ_POINT_TYPES)
+ 

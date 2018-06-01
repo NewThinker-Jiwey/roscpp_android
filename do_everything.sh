@@ -8,8 +8,8 @@ set -e
 # system.
 export PARALLEL_JOBS=$(nproc)
 
-if [[ -f /opt/ros/indigo/setup.bash ]] ; then
-    source /opt/ros/indigo/setup.bash
+if [[ -f /opt/ros/${ROS_VERSION}/setup.bash ]] ; then
+    source /opt/ros/${ROS_VERSION}/setup.bash
 else
     echo "ROS environment not found, please install it"
     exit 1
@@ -85,7 +85,7 @@ if [ -z $ANDROID_NDK ] ; then
 fi
 
 if [ -z $ROS_DISTRO ] ; then
-    die "HOST ROS ENVIRONMENT NOT FOUND! Did you source /opt/ros/indigo/setup.bash"
+    die "HOST ROS ENVIRONMENT NOT FOUND! Did you source /opt/ros/${ROS_VERSION}/setup.bash"
 fi
 
 [ -d $standalone_toolchain_path ] || run_cmd setup_standalone_toolchain
@@ -99,17 +99,6 @@ mkdir -p $prefix/libs
 # Start with catkin since we use it to build almost everything else
 [ -d $prefix/target ] || mkdir -p $prefix/target
 export CMAKE_PREFIX_PATH=$prefix/target
-
-# Get the android ndk build helper script
-# If file doesn't exist, then download and patch it
-if ! [ -e $prefix/android.toolchain.cmake ]; then
-    cd $prefix
-    download 'https://raw.githubusercontent.com/taka-no-me/android-cmake/556cc14296c226f753a3778d99d8b60778b7df4f/android.toolchain.cmake'
-    patch -p0 -N -d $prefix < /opt/roscpp_android/patches/android.toolchain.cmake.patch
-    cat $my_loc/files/android.toolchain.cmake.addendum >> $prefix/android.toolchain.cmake
-fi
-
-export RBA_TOOLCHAIN=$prefix/android.toolchain.cmake
 
 # Now get boost with a specialized build
 [ -d $prefix/libs/boost ] || run_cmd get_library boost $prefix/libs
@@ -177,7 +166,7 @@ if [[ $skip -ne 1 ]] ; then
 
     # Patch qhull - Don't install shared libraries
     # TODO: Remove shared libraries to avoid hack in parse_libs.py
-    #apply_patch /opt/roscpp_android/patches/qhull.patch
+    #apply_patch $my_loc/patches/qhull.patch
 
     # Patch eigen - Rename param as some constant already has the same name
     # TODO: Fork and push changes to creativa's repo
@@ -206,7 +195,7 @@ if [[ $skip -ne 1 ]] ; then
 
     # Patch roslib - weird issue with rospack.
     # TODO: Need to look further (only on catkin_make_isolated)
-    # apply_patch /opt/roscpp_android/patches/roslib.patch
+    # apply_patch $my_loc/patches/roslib.patch
 
     # Patch collada_parser - cmake detects mkstemps even though Android does not support it
     # TODO: investigate how to prevent cmake to detect system mkstemps
@@ -280,6 +269,21 @@ if [[ $skip -ne 1 ]] ; then
 
     ## Demo Application specific patches
 
+    ## additional patches
+    echo
+    echo -e '\e[34mApplying patches.\e[39m'
+    echo
+    apply_patch "${my_loc}/patches/additional/assimp-3.1.1.patch"
+    apply_patch "${my_loc}/patches/additional/collada-dom-2.4.0.patch"
+    apply_patch "${my_loc}/patches/additional/libxml2-2.9.1.patch"
+    apply_patch "${my_loc}/patches/additional/octomap-1.6.8.patch"
+    apply_patch "${my_loc}/patches/additional/opencv-2.4.9.patch"
+    apply_patch "${my_loc}/patches/additional/pcl.patch"
+    apply_patch "${my_loc}/patches/additional/pcrecpp.patch"
+    apply_patch "${my_loc}/patches/additional/poco-1.6.1.patch"
+    apply_patch "${my_loc}/patches/additional/qhull-2012.1.patch"
+    apply_patch "${my_loc}/patches/additional/uuid.patch"
+    apply_patch "${my_loc}/patches/additional/yaml-cpp.patch"
 fi
 
 # Before build
@@ -290,8 +294,9 @@ if [ $use_pluginlib -ne 0 ]; then
     echo
 
     # Install Python libraries that are needed by the scripts
-    apt-get install python-lxml -y
+    if ! [ ${SKIP_ROSDEP_INIT} == "yes" ]; then
     rosdep init
+    fi
     rosdep update
     pluginlib_helper_file=pluginlib_helper.cpp
     $my_loc/files/pluginlib_helper/pluginlib_helper.py -scanroot $prefix/catkin_ws/src -cppout $my_loc/files/pluginlib_helper/$pluginlib_helper_file

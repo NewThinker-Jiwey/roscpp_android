@@ -1,0 +1,17 @@
+--- libs/qhull-2012.1/CMakeLists.txt
++++ libs/qhull-2012.1/CMakeLists.txt
+@@ -37,2 +37,3 @@
+ project(qhull)
+ cmake_minimum_required(VERSION 2.6)
++add_compile_options(-Wno-format-security)
+--- libs/qhull-2012.1/src/libqhullcpp/QhullIterator.h
++++ libs/qhull-2012.1/src/libqhullcpp/QhullIterator.h
+@@ -19,2 +19,1 @@
+-//! Avoid dependence on <iterator>
+-namespace std { struct bidirectional_iterator_tag; struct random_access_iterator_tag; }
++#include <iterator>
+--- libs/qhull-2012.1/src/libqhullcpp/QhullLinkedList.h
++++ libs/qhull-2012.1/src/libqhullcpp/QhullLinkedList.h
+@@ -12,1 +12,1 @@
+-namespace std { struct bidirectional_iterator_tag; struct random_access_iterator_tag; }
++#include <iterator>

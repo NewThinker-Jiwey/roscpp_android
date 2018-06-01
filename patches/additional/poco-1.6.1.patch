@@ -1,0 +1,10 @@
+--- libs/poco-1.6.1/Foundation/src/Process_UNIX.cpp
++++ libs/poco-1.6.1/Foundation/src/Process_UNIX.cpp
+@@ -35,0 +35,7 @@
++static int getdtablesize()
++{
++    struct rlimit rl;
++    if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
++        return sysconf(_SC_OPEN_MAX);
++    return rl.rlim_cur;
++}
